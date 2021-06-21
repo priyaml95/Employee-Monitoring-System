@@ -19,13 +19,14 @@ public class FileHandler {
         }
         return single_file;
     }
+    
+    public File getFile() {
+    	return file;
+    }
 	
 	public void createNewFile() {
 		try {  
-            file.createNewFile();  
-            String path = file.getAbsolutePath();   
-            System.out.print(path); 
-
+            file.createNewFile();
         } catch (Exception e) {
         	System.out.println("Error while creating file.");
         }  
