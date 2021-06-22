@@ -16,8 +16,8 @@ import org.apache.commons.net.ftp.FTPClient;
 public class FTPHandler {
 	
 	private final static String SERVER = "192.168.1.196";
-	private final static String USERNAME = "ftpadmin";
-	private final static String PASSWORD = "admin";
+	private final static String USERNAME = "ftpserver";
+	private final static String PASSWORD = "qwerty";
 	private final static int PORT = 21;
 	
 	private FTPClient ftpClient;
@@ -101,7 +101,7 @@ public class FTPHandler {
 	
 	public String getDate() {
 		Date dateObject = Calendar.getInstance().getTime();  
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy"); 
 		return dateFormat.format(dateObject);
 	}
 }

