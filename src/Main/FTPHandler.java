@@ -4,10 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -21,20 +17,14 @@ public class FTPHandler {
 	private final static int PORT = 21;
 	
 	private FTPClient ftpClient;
-	private String directoryPath;
-	
+
 	public FTPHandler() {
 		ftpClient = new FTPClient();
 	}
 	
-	public void uploadToServer(File file) {
-		connectToServer();
-		createDirectories();
-		uploadFile(file);
-	}
-	
-	public void uploadFile(File file) {
+	public void uploadFile(File file, String directoryPath) {
 		try {		
+			connectToServer();
 	        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 	        String fileName = file.getName();
             String filePath = directoryPath + fileName;
@@ -42,39 +32,58 @@ public class FTPHandler {
             
             boolean uploadedSuccessfully = ftpClient.storeFile(filePath, inputStream);
             if (uploadedSuccessfully) {
-                System.out.println("The file has been uploaded successfully.");
+                System.out.println(filePath + " has been uploaded successfully.\n");
             }
             inputStream.close();
-		} catch(IOException ex) {
-			System.out.println("Error in uploading file.");
+		} catch(IOException e) {
+			System.out.println("Error : " + e.getMessage());
 		} finally {
 			logOut();
         }
 	}
 	
-	public void createDirectories() {
-		String username = System.getProperty("user.name");
+	boolean checkDirectoryExists(String directoryPath) throws IOException {
+		connectToServer();
+	    ftpClient.changeWorkingDirectory(directoryPath);
+	    int returnCode = ftpClient.getReplyCode();
+	    if (returnCode == 550) {
+	    	logOut();
+	        return false;
+	    }
+	    ftpClient.changeWorkingDirectory("/");
+	    logOut();
+	    return true;
+	}
+	
+	public void createUserDirectory() {
+		connectToServer();
+		String username = Utils.getUsername();
 		String userDirectoryPath = "/" + username + "/";
-		String date = getDate();
-		directoryPath = userDirectoryPath + date + "/";
-		
 		createDirectory(userDirectoryPath);
-		createDirectory(directoryPath);
+		logOut();
+	}
+	
+	public void createDateDirectory(String date) {
+		connectToServer();
+		String username = Utils.getUsername();
+		String dateDirectoryPath = "/" + username + "/" + date;
+		createDirectory(dateDirectoryPath);
+		logOut();
 	}
 	
 	public void createDirectory(String directoryPath) {
 		boolean created = false;
-		
 		try {
 			created = ftpClient.makeDirectory(directoryPath);
 		} catch (IOException e) {
-			System.out.println("Error in creating directory");
+			System.out.println("Error : " + e.getMessage());
+			return;
 		}
 		if(!created) {
 			System.out.println(directoryPath + " already exists");
 		}
 		else {
-			System.out.println("Directory created successfully");
+			System.out.println(directoryPath + " created successfully");
 		}
 	}
 	
@@ -83,8 +92,8 @@ public class FTPHandler {
 			ftpClient.connect(SERVER, PORT);
 	        ftpClient.login(USERNAME, PASSWORD);
 	        ftpClient.enterLocalPassiveMode();
-		} catch(IOException ex) {
-			System.out.println("Error in connecting.");
+		} catch(IOException e) {
+			System.out.println("Error : " + e.getMessage());
 		}
 	}
 	
@@ -94,14 +103,10 @@ public class FTPHandler {
                 ftpClient.logout();
                 ftpClient.disconnect();
             }
-        } catch (IOException ex) {
-        	System.out.println("Error in disconnecting.");
+        } catch (IOException e) {
+        	System.out.println("Error : " + e.getMessage());
         }
 	}
 	
-	public String getDate() {
-		Date dateObject = Calendar.getInstance().getTime();  
-		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy"); 
-		return dateFormat.format(dateObject);
-	}
+
 }

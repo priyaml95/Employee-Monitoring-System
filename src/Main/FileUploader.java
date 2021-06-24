@@ -1,5 +1,5 @@
 package Main;
 
 public interface FileUploader {
-	public void uploadFile();
+	public void uploadFile(String directoryPath, String date);
 }

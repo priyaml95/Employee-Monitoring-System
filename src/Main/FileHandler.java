@@ -24,11 +24,11 @@ public class FileHandler {
     	return file;
     }
 	
-	public void createNewFile() {
+	public void createFile() {
 		try {  
             file.createNewFile();
         } catch (Exception e) {
-        	System.out.println("Error while creating file.");
+        	System.out.println("Error : " + e.getMessage());
         }  
 	}
 	
@@ -38,7 +38,7 @@ public class FileHandler {
 			fileWriter.write(text);
 			fileWriter.close();
 		} catch (IOException e) {
-			System.out.println("Error while writing file.");
+			System.out.println("Error : " + e.getMessage());
 		}
 	}
 	
@@ -48,7 +48,18 @@ public class FileHandler {
 			fileWriter.write(text);
 			fileWriter.close();
 		} catch (IOException e) {
-			System.out.println("Error while appending to file.");
+			System.out.println("Error : " + e.getMessage());
 		}
+	}
+	
+	public void deleteFile() {
+		boolean fileDeleted = file.delete();
+		if(!fileDeleted) {
+			System.out.println("Error in deleting file.");
+		}
+	}
+	
+	public boolean fileExists() {
+		return file.exists();
 	}
 }

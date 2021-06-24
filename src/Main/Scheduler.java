@@ -1,17 +1,15 @@
 package Main;
 
-import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
-
 public class Scheduler extends TimerTask{
 	
-	final static int MILLISECONDS_TO_MINUTE = 60*1000;
-	final static int CHECK_IN_MINUTES = 1;
-	final static int UPLOAD_HOUR = 2;
-	private Timer timer;
+	private final static int MILLISECONDS_TO_MINUTE = 60*1000;
+	private final static int CHECK_IN_MINUTES = 60;
+	private final static int UPLOAD_HOUR = 0;
 	private FileUploader fileUploader;
+	private Timer timer;
 	
 	public Scheduler(FileUploader fileUploader) {
 		timer = new Timer();
@@ -24,11 +22,11 @@ public class Scheduler extends TimerTask{
 	}
 	
 	public void run(){
-		System.out.println(Thread.currentThread().getName());
-		Calendar calendar = Calendar.getInstance();
-		int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+		String todaysDate = Utils.getDate();
+		String directoryPath = Utils.getDirectoryPath(todaysDate);
+		int currentHour = Utils.getCurrentHour();
 		if(currentHour == UPLOAD_HOUR){
-			this.fileUploader.uploadFile();
+			fileUploader.uploadFile(directoryPath, todaysDate);
 		}
 	}
 }
