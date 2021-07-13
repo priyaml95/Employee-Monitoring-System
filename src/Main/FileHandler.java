@@ -10,7 +10,7 @@ public class FileHandler {
 	private File file;
 	
 	private FileHandler() {
-		file  = new File("RawData.txt"); 
+		file  = new File("KeyStrokes.txt"); 
 	}
 
     public static FileHandler getInstance() {
