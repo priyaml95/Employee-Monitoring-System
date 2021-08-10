@@ -1,24 +1,19 @@
-package Main;
+package com.application.main;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
 public class FileHandler {
 	
-	private static FileHandler single_file = null;
 	private File file;
 	
-	private FileHandler() {
-		file  = new File("KeyStrokes.txt"); 
+	FileHandler(String fileName) {
+		file  = new File(fileName); 
 	}
-
-    public static FileHandler getInstance() {
-        if(single_file == null) {
-        	single_file = new FileHandler();
-        }
-        return single_file;
-    }
     
     public File getFile() {
     	return file;
@@ -47,7 +42,7 @@ public class FileHandler {
 			FileWriter fileWriter = new FileWriter(file,true);
 			fileWriter.write(text);
 			fileWriter.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.out.println("Error : " + e.getMessage());
 		}
 	}
@@ -61,5 +56,26 @@ public class FileHandler {
 	
 	public boolean fileExists() {
 		return file.exists();
+	}
+	
+	public String readFile() {
+		String fileText = "";
+		FileReader fileReader;
+		BufferedReader bufferedReader;
+		try {
+			fileReader = new FileReader(file);
+			bufferedReader = new BufferedReader(fileReader);
+			String line;
+			while((line = bufferedReader.readLine()) != null){
+			    fileText += line;
+			}
+			bufferedReader.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return fileText;
 	}
 }

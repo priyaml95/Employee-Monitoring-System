@@ -1,4 +1,4 @@
-package Main;
+package com.application.main;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -28,7 +28,7 @@ public final class Utils {
 	}
 	
 	public static String getDirectoryPath(String date) {
-		String directoryPath = "/" + getUsername() + "/" + date + "/";
+		String directoryPath = "/" + date + "/" + getUsername() + "/";
 		return directoryPath;
 	}
 	
@@ -36,5 +36,13 @@ public final class Utils {
 		Calendar calendar = Calendar.getInstance();
 		int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
 		return currentHour;
+	}
+	
+	public static long getSystemTime() {
+		return System.currentTimeMillis();
+	}
+	
+	public static String newLine() {
+		return "\n";
 	}
 }

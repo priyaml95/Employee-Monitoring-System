@@ -1,4 +1,4 @@
-package Main;
+package com.application.main;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,7 +11,7 @@ import org.apache.commons.net.ftp.FTPClient;
 
 public class FTPHandler {
 	
-	private final static String SERVER = "192.168.1.196";
+	private final static String SERVER = "192.168.0.126";
 	private final static String USERNAME = "ftpserver";
 	private final static String PASSWORD = "qwerty";
 	private final static int PORT = 21;
@@ -55,18 +55,17 @@ public class FTPHandler {
 	    return true;
 	}
 	
-	public void createUserDirectory() {
+	public void createUserDirectory(String date) {
 		connectToServer();
 		String username = Utils.getUsername();
-		String userDirectoryPath = "/" + username + "/";
+		String userDirectoryPath = "/" + date + "/" + username + "/";
 		createDirectory(userDirectoryPath);
 		logOut();
 	}
 	
 	public void createDateDirectory(String date) {
 		connectToServer();
-		String username = Utils.getUsername();
-		String dateDirectoryPath = "/" + username + "/" + date;
+		String dateDirectoryPath = "/" + date + "/";
 		createDirectory(dateDirectoryPath);
 		logOut();
 	}
